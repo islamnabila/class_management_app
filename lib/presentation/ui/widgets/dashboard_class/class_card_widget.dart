@@ -1,14 +1,20 @@
+import 'package:class_management_app/data/models/class.dart';
+import 'package:class_management_app/presentation/states_holder/delete_class_cotroller.dart';
+import 'package:class_management_app/presentation/states_holder/fetch_class_controller.dart';
+import 'package:class_management_app/presentation/states_holder/unenroll_class_container.dart';
+import 'package:class_management_app/presentation/ui/screens/add_new_admin_screen.dart';
 import 'package:class_management_app/presentation/ui/screens/create_class_screen.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 
 class ClassCardWidget extends StatefulWidget {
   const ClassCardWidget({
-    super.key, required this.cardColors,
+    super.key, required this.cardColors, required this.classData,required this.countStudent
   });
   final Color cardColors;
+  final Class classData;
+
+  final int? countStudent;
 
   @override
   State<ClassCardWidget> createState() => _ClassCardWidgetState();
@@ -17,6 +23,10 @@ class ClassCardWidget extends StatefulWidget {
 class _ClassCardWidgetState extends State<ClassCardWidget> {
   @override
   Widget build(BuildContext context) {
+    // if (widget.classData == null) {
+    //   // Handle the case when classData is null
+    //   return SizedBox.shrink();
+    // }
     return Card(
       color: widget.cardColors,
       shape: RoundedRectangleBorder(
@@ -31,7 +41,13 @@ class _ClassCardWidgetState extends State<ClassCardWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("56_F Spring 24", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white),),
+                Flexible(
+                  child: Text(widget.classData.className ?? "",
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white),overflow: TextOverflow.ellipsis,),
+                ),
                 IconButton(onPressed: (){
                   showModalBottomSheet(
                     shape: RoundedRectangleBorder(
@@ -62,10 +78,12 @@ class _ClassCardWidgetState extends State<ClassCardWidget> {
                                   SizedBox(
                                     width: 10,
                                   ),
-                                  Text(
-                                    "Edit",
-                                    style: TextStyle(
-                                      fontSize: 16,
+                                  Expanded(
+                                    child: Text(
+                                      "Edit",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   )
                                 ],
@@ -76,7 +94,11 @@ class _ClassCardWidgetState extends State<ClassCardWidget> {
                             ),
                             GestureDetector(
                               onTap: (){
-
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context){
+                                      return deleteClass;
+                                    });
                               },
                               child: Row(
                                 children: [
@@ -87,15 +109,75 @@ class _ClassCardWidgetState extends State<ClassCardWidget> {
                                   SizedBox(
                                     width: 10,
                                   ),
-                                  Text(
-                                    "Delete",
-                                    style: TextStyle(
-                                      fontSize: 16,
+                                  Expanded(
+                                    child: Text(
+                                      "Delete",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   )
                                 ],
                               ),
-                            )
+                            ),
+                            SizedBox(
+                              height: 28,
+                            ),
+                            GestureDetector(
+                              onTap: (){
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context){
+                                      return unenrollClass;
+                                    });
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.clear,
+                                    size: 22,
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "Unenroll",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 28,
+                            ),
+                            GestureDetector(
+                              onTap: (){
+                                Get.to(()=>AddNewAdminScreen(title: "Add New Admin"));
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.add_circle,
+                                    size: 22,
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "New Admin",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -107,13 +189,47 @@ class _ClassCardWidgetState extends State<ClassCardWidget> {
               ],
             ),
             SizedBox(height: 10,),
-            Text("56_F", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white),),
+            Text(widget.classData.section ?? "" , style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white),),
             SizedBox(height: 20,),
-            Text("Strdent number : 20",style: TextStyle(color: Colors.white, fontSize: 15),),
+            Text("Student number : ${widget.countStudent}",style: TextStyle(color: Colors.white, fontSize: 15),),
 
           ],
         ),
       ),
+    );
+  }
+  AlertDialog get deleteClass{
+    return AlertDialog(
+      title: Text("Delete"),
+      content: Text("Do you want to delete this class?"),
+      actions: [
+        TextButton(onPressed: (){
+          Get.back();
+        }, child: Text("Cancel")),
+        TextButton(onPressed: (){
+          Get.find<deleteClassController>().deleteClass(widget.classData.classId!);
+          Get.find<FetchClassController>().classListModel.classList!.clear();
+          Get.find<FetchClassController>().getClassList();
+          Get.back();
+        }, child: Text("Yes"))
+      ],
+    );
+  }
+  AlertDialog get unenrollClass{
+    return AlertDialog(
+      title: Text("Unenroll Class"),
+      content: Text("Do you want to unenroll this class?"),
+      actions: [
+        TextButton(onPressed: (){
+          Get.back();
+        }, child: Text("Cancel")),
+        TextButton(onPressed: (){
+          Get.find<UnenrollClassController>().unenrollClass(widget.classData.classId!);
+          Get.find<FetchClassController>().classListModel.classList!.clear();
+          Get.find<FetchClassController>().getClassList();
+          Get.back();
+        }, child: Text("Yes"))
+      ],
     );
   }
 }
